@@ -1,17 +1,24 @@
-# PostgreSQL database Deployment + Service
-resource "kubernetes_manifest" "postgres" {
+# db.tf
+
+# PVC
+resource "kubernetes_manifest" "postgres_pvc" {
   manifest = yamldecode(<<YAML
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
 spec:
-  accessModes:
-    - ReadWriteOnce
+  accessModes: [ "ReadWriteOnce" ]
   resources:
     requests:
       storage: 1Gi
----
+YAML
+  )
+}
+
+# Deployment
+resource "kubernetes_manifest" "postgres_deploy" {
+  manifest = yamldecode(<<YAML
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -32,9 +39,9 @@ spec:
             - name: POSTGRES_DB
               value: serviceadb
             - name: POSTGRES_USER
-              value: user
+              value: secrets.POSTGRES_USER
             - name: POSTGRES_PASSWORD
-              value: password
+              value: secrets.POSTGRES_PASSWORD
           ports:
             - containerPort: 5432
           volumeMounts:
@@ -44,7 +51,13 @@ spec:
         - name: postgres-storage
           persistentVolumeClaim:
             claimName: postgres-pvc
----
+YAML
+  )
+}
+
+# Service
+resource "kubernetes_manifest" "postgres_service" {
+  manifest = yamldecode(<<YAML
 apiVersion: v1
 kind: Service
 metadata:
@@ -56,5 +69,5 @@ spec:
     - port: 5432
       targetPort: 5432
 YAML
-)
+  )
 }

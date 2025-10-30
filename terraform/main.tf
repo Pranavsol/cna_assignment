@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: service-a
-        image: ${var.dockerhub_user}/service-a:latest
+        image: ${secrets.DOCKERHUB_USERNAME}/service-a:latest
         ports:
         - containerPort: 5000
 ---
