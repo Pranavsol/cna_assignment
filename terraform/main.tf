@@ -17,9 +17,9 @@ resource "helm_release" "metrics_server" {
 }
 
 #######################################################
-# Service A Deployment + Service
+# Service A Deployment
 #######################################################
-resource "kubernetes_manifest" "service_a" {
+resource "kubernetes_manifest" "service_a_deployment" {
   manifest = yamldecode(<<YAML
 apiVersion: apps/v1
 kind: Deployment
@@ -37,10 +37,18 @@ spec:
     spec:
       containers:
         - name: service-a
-          image: ${var.dockerhub_user}/service-a:latest
+          image: "${var.dockerhub_user}/service-a:latest"
           ports:
             - containerPort: 5000
----
+YAML
+  )
+}
+
+#######################################################
+# Service A Service
+#######################################################
+resource "kubernetes_manifest" "service_a_service" {
+  manifest = yamldecode(<<YAML
 apiVersion: v1
 kind: Service
 metadata:
@@ -56,9 +64,9 @@ YAML
 }
 
 #######################################################
-# Service B Deployment + Service
+# Service B Deployment
 #######################################################
-resource "kubernetes_manifest" "service_b" {
+resource "kubernetes_manifest" "service_b_deployment" {
   manifest = yamldecode(<<YAML
 apiVersion: apps/v1
 kind: Deployment
@@ -76,7 +84,7 @@ spec:
     spec:
       containers:
         - name: service-b
-          image: ${var.dockerhub_user}/service-b:latest
+          image: "${var.dockerhub_user}/service-b:latest"
           env:
             - name: DB_HOST
               value: "postgres"
@@ -88,7 +96,15 @@ spec:
               value: "${var.db_pass}"
           ports:
             - containerPort: 5001
----
+YAML
+  )
+}
+
+#######################################################
+# Service B Service
+#######################################################
+resource "kubernetes_manifest" "service_b_service" {
+  manifest = yamldecode(<<YAML
 apiVersion: v1
 kind: Service
 metadata:

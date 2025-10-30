@@ -76,6 +76,12 @@ jobs:
         run: terraform init
         working-directory: terraform
 
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > ~/.kube/config
+          chmod 600 ~/.kube/config
+
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: terraform
