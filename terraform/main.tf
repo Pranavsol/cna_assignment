@@ -53,22 +53,6 @@ YAML
   )
 }
 
-resource "kubernetes_manifest" "postgres_service" {
-  manifest = yamldecode(<<YAML
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: postgres
-    spec:
-      selector:
-        app: postgres
-      ports:
-        - port: 5432
-          targetPort: 5432
-    YAML
-  )
-}
-
 #######################################################
 # Service A Deployment + Service
 #######################################################
