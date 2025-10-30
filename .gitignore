@@ -1,1 +1,24 @@
-terraform/terraform.tfvars
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+tfplan
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker Scout results
+*.sarif
+
+# Actions runner
+actions-runner/

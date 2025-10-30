@@ -75,19 +75,21 @@ jobs:
       # --- 8️⃣ Terraform Stage: Deploy Apps ---
       - name: Create terraform.tfvars
         run: |
-          @"
+          $tfvarsContent = @"
           dockerhub_user = "${{ secrets.DOCKERHUB_USERNAME }}"
           db_user        = "${{ secrets.POSTGRES_USER }}"
           db_pass        = "${{ secrets.POSTGRES_PASSWORD }}"
           db_name        = "cna_assignment"
-          kubeconfig     = "$HOME/.kube/config"
-          "@ | Out-File -FilePath terraform.tfvars -Encoding utf8
+          "@
+          Set-Content -Path "terraform.tfvars" -Value $tfvarsContent
+          Write-Host "terraform.tfvars created successfully"
         working-directory: terraform
         shell: powershell
 
       - name: Terraform Init
         run: terraform init
         working-directory: terraform
+        shell: powershell
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan

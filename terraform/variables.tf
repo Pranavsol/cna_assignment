@@ -1,9 +1,3 @@
-variable "kubeconfig" {
-  description = "Path to kubeconfig file"
-  type        = string
-  default     = "~/.kube/config"
-}
-
 variable "db_name" {
   description = "PostgreSQL database name"
   type        = string
