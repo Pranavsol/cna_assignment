@@ -15,7 +15,6 @@ def get_db_conn():
 def home():
     try:
         conn = get_db_conn()
-        return "Connected to PostgreSQL successfully!"
         data = conn.cursor().fetchall()
         return {"data": data}
     except Exception as e:
