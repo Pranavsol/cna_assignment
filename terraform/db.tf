@@ -1,5 +1,3 @@
-# db.tf
-
 # PVC
 resource "kubernetes_manifest" "postgres_pvc" {
   manifest = yamldecode(<<YAML
@@ -8,7 +6,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
 spec:
-  accessModes: [ "ReadWriteOnce" ]
+  accessModes:
+    - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
@@ -37,11 +36,11 @@ spec:
           image: postgres:15
           env:
             - name: POSTGRES_DB
-              value: serviceadb
+              value: "${var.db_name}"
             - name: POSTGRES_USER
-              value: secrets.POSTGRES_USER
+              value: "${var.db_user}"
             - name: POSTGRES_PASSWORD
-              value: secrets.POSTGRES_PASSWORD
+              value: "${var.db_pass}"
           ports:
             - containerPort: 5432
           volumeMounts:

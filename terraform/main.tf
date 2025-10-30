@@ -2,10 +2,10 @@
 # Helm installs
 #######################################################
 resource "helm_release" "nginx_ingress" {
-  name       = "ingress-nginx"
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  chart      = "ingress-nginx"
-  namespace  = "ingress-nginx"
+  name             = "ingress-nginx"
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  namespace        = "ingress-nginx"
   create_namespace = true
 }
 
@@ -15,8 +15,6 @@ resource "helm_release" "metrics_server" {
   chart      = "metrics-server"
   namespace  = "kube-system"
 }
-
-
 
 #######################################################
 # Service A Deployment + Service
@@ -38,10 +36,10 @@ spec:
         app: service-a
     spec:
       containers:
-      - name: service-a
-        image: ${secrets.DOCKERHUB_USERNAME}/service-a:latest
-        ports:
-        - containerPort: 5000
+        - name: service-a
+          image: ${var.dockerhub_user}/service-a:latest
+          ports:
+            - containerPort: 5000
 ---
 apiVersion: v1
 kind: Service
@@ -51,10 +49,10 @@ spec:
   selector:
     app: service-a
   ports:
-  - port: 80
-    targetPort: 5000
+    - port: 80
+      targetPort: 5000
 YAML
-)
+  )
 }
 
 #######################################################
@@ -77,28 +75,19 @@ spec:
         app: service-b
     spec:
       containers:
-      - name: service-b
-        image: ${var.dockerhub_user}/service-b:latest
-        env:
-        - name: DB_HOST
-          value: "postgres"
-        - name: DB_NAME
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_DB
-        - name: DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_USER
-        - name: DB_PASS
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_PASSWORD
-        ports:
-        - containerPort: 5001
+        - name: service-b
+          image: ${var.dockerhub_user}/service-b:latest
+          env:
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_NAME
+              value: "${var.db_name}"
+            - name: DB_USER
+              value: "${var.db_user}"
+            - name: DB_PASS
+              value: "${var.db_pass}"
+          ports:
+            - containerPort: 5001
 ---
 apiVersion: v1
 kind: Service
@@ -108,10 +97,10 @@ spec:
   selector:
     app: service-b
   ports:
-  - port: 80
-    targetPort: 5001
+    - port: 80
+      targetPort: 5001
 YAML
-)
+  )
 }
 
 #######################################################
@@ -128,23 +117,23 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: my-service.com
-    http:
-      paths:
-      - path: /service-a(/|$)(.*)
-        pathType: Prefix
-        backend:
-          service:
-            name: service-a
-            port:
-              number: 80
-      - path: /service-b(/|$)(.*)
-        pathType: Prefix
-        backend:
-          service:
-            name: service-b
-            port:
-              number: 80
+    - host: my-service.com
+      http:
+        paths:
+          - path: /service-a(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: service-a
+                port:
+                  number: 80
+          - path: /service-b(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: service-b
+                port:
+                  number: 80
 YAML
-)
+  )
 }

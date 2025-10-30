@@ -81,3 +81,7 @@ jobs:
         working-directory: terraform
         env:
           KUBECONFIG: ${{ env.KUBE_CONFIG_PATH }}
+          TF_VAR_dockerhub_user: ${{ secrets.DOCKERHUB_USERNAME }}
+          TF_VAR_db_user: ${{ secrets.POSTGRES_USER }}
+          TF_VAR_db_pass: ${{ secrets.POSTGRES_PASSWORD }}
+          TF_VAR_db_name: cna_assignment
