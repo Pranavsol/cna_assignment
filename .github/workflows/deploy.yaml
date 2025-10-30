@@ -97,6 +97,7 @@ jobs:
           TF_VAR_db_user: ${{ secrets.POSTGRES_USER }}
           TF_VAR_db_pass: ${{ secrets.POSTGRES_PASSWORD }}
           TF_VAR_db_name: "cna_assignment"
+          TF_VAR_kubeconfig: ${{ env.KUBE_CONFIG_PATH }}
 
       # --- 🔟 Optional: Save Terraform State ---
       - name: Save Terraform state artifact

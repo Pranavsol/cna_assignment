@@ -49,18 +49,23 @@ spec:
               value: "${var.db_pass}"
           ports:
             - containerPort: 5432
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres
-spec:
-  selector:
-    app: postgres
-  ports:
-    - port: 5432
-      targetPort: 5432
 YAML
+  )
+}
+
+resource "kubernetes_manifest" "postgres_service" {
+  manifest = yamldecode(<<YAML
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: postgres
+    spec:
+      selector:
+        app: postgres
+      ports:
+        - port: 5432
+          targetPort: 5432
+    YAML
   )
 }
 
@@ -90,17 +95,21 @@ spec:
           image: ${var.dockerhub_user}/service-a:latest
           ports:
             - containerPort: 5000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-a
-spec:
-  selector:
-    app: service-a
-  ports:
-    - port: 80
-      targetPort: 5000
+YAML
+  )
+}
+resource "kubernetes_manifest" "service_a_deployment" {
+  manifest = yamldecode(<<YAML
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: service-a
+    spec:
+      selector:
+        app: service-a
+      ports:
+        - port: 80
+          targetPort: 5000
 YAML
   )
 }
@@ -140,17 +149,22 @@ spec:
               value: "${var.db_pass}"
           ports:
             - containerPort: 5001
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-b
-spec:
-  selector:
-    app: service-b
-  ports:
-    - port: 80
-      targetPort: 5001
+YAML
+  )
+}
+
+resource "kubernetes_manifest" "service_b_deployment" {
+  manifest = yamldecode(<<YAML
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: service-b
+    spec:
+      selector:
+        app: service-b
+      ports:
+        - port: 80
+          targetPort: 5001
 YAML
   )
 }
