@@ -4,53 +4,31 @@
 resource "helm_release" "nginx_ingress" {
   name             = "ingress-nginx"
   repository       = "https://kubernetes.github.io/ingress-nginx"
-  chart             = "ingress-nginx"
+  chart            = "ingress-nginx"
   namespace        = "ingress-nginx"
   create_namespace = true
+  
+  timeout = 600  # 10 minutes
 }
 
 resource "helm_release" "metrics_server" {
   name       = "metrics-server"
   repository = "https://kubernetes-sigs.github.io/metrics-server/"
   chart      = "metrics-server"
-  namespace   = "kube-system"
-}
-
-#######################################################
-# PostgreSQL Deployment + Service
-#######################################################
-resource "kubernetes_manifest" "postgres" {
-  manifest = yamldecode(<<YAML
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres
-  labels:
-    app: postgres
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      containers:
-        - name: postgres
-          image: postgres:15
-          env:
-            - name: POSTGRES_DB
-              value: "${var.db_name}"
-            - name: POSTGRES_USER
-              value: "${var.db_user}"
-            - name: POSTGRES_PASSWORD
-              value: "${var.db_pass}"
-          ports:
-            - containerPort: 5432
-YAML
-  )
+  namespace  = "kube-system"
+  
+  timeout = 600  # 10 minutes
+  
+  # Required for Docker Desktop / local development
+  set {
+    name  = "args[0]"
+    value = "--kubelet-insecure-tls"
+  }
+  
+  set {
+    name  = "args[1]"
+    value = "--kubelet-preferred-address-types=InternalIP"
+  }
 }
 
 #######################################################
@@ -62,6 +40,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: service-a
+  namespace: default
   labels:
     app: service-a
 spec:
@@ -82,20 +61,24 @@ spec:
 YAML
   )
 }
+
 resource "kubernetes_manifest" "service_a_deployment" {
   manifest = yamldecode(<<YAML
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: service-a
-    spec:
-      selector:
-        app: service-a
-      ports:
-        - port: 80
-          targetPort: 5000
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-a
+  namespace: default
+spec:
+  selector:
+    app: service-a
+  ports:
+    - port: 80
+      targetPort: 5000
 YAML
   )
+  
+  depends_on = [kubernetes_manifest.service_a]
 }
 
 #######################################################
@@ -107,6 +90,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: service-b
+  namespace: default
   labels:
     app: service-b
 spec:
@@ -139,18 +123,21 @@ YAML
 
 resource "kubernetes_manifest" "service_b_deployment" {
   manifest = yamldecode(<<YAML
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: service-b
-    spec:
-      selector:
-        app: service-b
-      ports:
-        - port: 80
-          targetPort: 5001
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-b
+  namespace: default
+spec:
+  selector:
+    app: service-b
+  ports:
+    - port: 80
+      targetPort: 5001
 YAML
   )
+  
+  depends_on = [kubernetes_manifest.service_b]
 }
 
 #######################################################
@@ -162,8 +149,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: multi-service-ingress
+  namespace: default
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
@@ -171,14 +160,14 @@ spec:
       http:
         paths:
           - path: /service-a(/|$)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: service-a
                 port:
                   number: 80
           - path: /service-b(/|$)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: service-b
@@ -186,5 +175,10 @@ spec:
                   number: 80
 YAML
   )
+  
+  depends_on = [
+    helm_release.nginx_ingress,
+    kubernetes_manifest.service_a_deployment,
+    kubernetes_manifest.service_b_deployment
+  ]
 }
-

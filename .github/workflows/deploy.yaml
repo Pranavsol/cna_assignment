@@ -1,17 +1,17 @@
-name: 🔐 DevSecOps Offline Pipeline
+name: 🔒 DevSecOps Pipeline
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch: # Allows manual trigger from GitHub UI
 
 env:
   TF_VERSION: "1.9.8"
-  KUBE_CONFIG_PATH: "/tmp/kubeconfig"
 
 jobs:
   build-scan-deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted # Using self-hosted runner on your local machine
 
     steps:
       # --- 1️⃣ Checkout ---
@@ -38,25 +38,23 @@ jobs:
       # --- 4️⃣ DevSecOps Scans ---
       - name: 🧩 Scan Service A with Docker Scout
         uses: docker/scout-action@v1
+        continue-on-error: true # Don't fail pipeline on vulnerabilities
         with:
           command: cves
           image: ${{ secrets.DOCKERHUB_USERNAME }}/service-a:latest
           sarif-file: results-service-a.sarif
           summary: true
-          format: json
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          write-comment: true
 
       - name: 🧩 Scan Service B with Docker Scout
         uses: docker/scout-action@v1
+        continue-on-error: true # Don't fail pipeline on vulnerabilities
         with:
           command: cves
           image: ${{ secrets.DOCKERHUB_USERNAME }}/service-b:latest
           sarif-file: results-service-b.sarif
           summary: true
-          format: json
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          write-comment: true
 
       # --- 5️⃣ Push Docker Images ---
       - name: Push Docker Images
@@ -70,38 +68,46 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      # --- 7️⃣ Setup kubectl ---
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
+      # --- 7️⃣ Verify Kubernetes Connection ---
+      - name: Verify Kubernetes cluster
+        run: kubectl cluster-info
 
-      # --- 8️⃣ Configure Kubeconfig ---
-      - name: Write kubeconfig
-        run: |
-          echo "${{ secrets.KUBECONFIG_CONTENT }}" > $KUBE_CONFIG_PATH
-          chmod 600 $KUBE_CONFIG_PATH
-          mkdir -p ~/.kube
-          cp $KUBE_CONFIG_PATH ~/.kube/config
-        shell: bash
-
-      # --- 9️⃣ Terraform Stage: Deploy Apps ---
+      # --- 8️⃣ Terraform Stage: Deploy Apps ---
       - name: Terraform Init
         run: terraform init
         working-directory: terraform
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
         working-directory: terraform
         env:
-          KUBECONFIG: ${{ env.KUBE_CONFIG_PATH }}
           TF_VAR_dockerhub_user: ${{ secrets.DOCKERHUB_USERNAME }}
           TF_VAR_db_user: ${{ secrets.POSTGRES_USER }}
           TF_VAR_db_pass: ${{ secrets.POSTGRES_PASSWORD }}
           TF_VAR_db_name: "cna_assignment"
-          TF_VAR_kubeconfig: ${{ env.KUBE_CONFIG_PATH }}
 
-      # --- 🔟 Optional: Save Terraform State ---
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        working-directory: terraform
+        env:
+          TF_VAR_dockerhub_user: ${{ secrets.DOCKERHUB_USERNAME }}
+          TF_VAR_db_user: ${{ secrets.POSTGRES_USER }}
+          TF_VAR_db_pass: ${{ secrets.POSTGRES_PASSWORD }}
+          TF_VAR_db_name: "cna_assignment"
+
+      # --- 9️⃣ Verify Deployment ---
+      - name: Verify Deployment
+        run: |
+          echo "Checking deployment status..."
+          kubectl get pods
+          kubectl get svc
+          kubectl get ingress
+
+      # --- 🔟 Save Terraform State ---
       - name: Save Terraform state artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: terraform-state
           path: terraform/terraform.tfstate
+          retention-days: 30

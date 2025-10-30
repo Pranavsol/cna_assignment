@@ -1,25 +1,26 @@
 variable "kubeconfig" {
   description = "Path to kubeconfig file"
   type        = string
-  default     = "C:/Users/asus/.kube/config"
-}
-
-variable "dockerhub_user" {
-  type        = string
-  description = "DockerHub username"
-}
-
-variable "db_user" {
-  type        = string
-  description = "Postgres user"
-}
-
-variable "db_pass" {
-  type        = string
-  description = "Postgres password"
+  default     = "~/.kube/config"
 }
 
 variable "db_name" {
+  description = "PostgreSQL database name"
   type        = string
-  description = "Database name"
+}
+
+variable "db_user" {
+  description = "PostgreSQL database user"
+  type        = string
+}
+
+variable "db_pass" {
+  description = "PostgreSQL database password"
+  type        = string
+  sensitive   = true
+}
+
+variable "dockerhub_user" {
+  description = "DockerHub username"
+  type        = string
 }

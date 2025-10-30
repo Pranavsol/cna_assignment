@@ -5,6 +5,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
+  namespace: default
 spec:
   accessModes:
     - ReadWriteOnce
@@ -22,6 +23,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
+  namespace: default
 spec:
   selector:
     matchLabels:
@@ -52,6 +54,8 @@ spec:
             claimName: postgres-pvc
 YAML
   )
+  
+  depends_on = [kubernetes_manifest.postgres_pvc]
 }
 
 # Service
@@ -61,6 +65,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: postgres
+  namespace: default
 spec:
   selector:
     app: postgres
@@ -69,4 +74,6 @@ spec:
       targetPort: 5432
 YAML
   )
+  
+  depends_on = [kubernetes_manifest.postgres_deploy]
 }
