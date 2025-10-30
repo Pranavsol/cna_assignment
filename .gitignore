@@ -20,5 +20,7 @@ Thumbs.db
 # Docker Scout results
 *.sarif
 
-# Actions runner
+# GitHub Actions runner
+.github-runner/
 actions-runner/
+_work/
