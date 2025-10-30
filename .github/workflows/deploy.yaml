@@ -32,17 +32,27 @@ jobs:
       - name: Build Service B
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/service-b:latest ./service-b
 
-      - name: 🧠 Docker Scout Scan (Service A)
+      - name: 🧩 Scan Service A with Docker Scout
         uses: docker/scout-action@v1
         with:
+          command: cves # 👈 REQUIRED
           image: ${{ secrets.DOCKERHUB_USERNAME }}/service-a:latest
           sarif-file: results-service-a.sarif
+          summary: true
+          format: json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          write-comment: true
 
-      - name: 🧠 Docker Scout Scan (Service B)
+      - name: 🧩 Scan Service B with Docker Scout
         uses: docker/scout-action@v1
         with:
+          command: cves # 👈 REQUIRED
           image: ${{ secrets.DOCKERHUB_USERNAME }}/service-b:latest
           sarif-file: results-service-b.sarif
+          summary: true
+          format: json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          write-comment: true
 
       - name: Push images
         run: |
