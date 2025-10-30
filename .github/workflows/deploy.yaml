@@ -1,4 +1,4 @@
-name: 🔐 DevSecOps Pipeline
+name: 🔐 DevSecOps Offline Pipeline
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
       - name: Build Service B
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/service-b:latest ./service-b
 
-      # --- 4️⃣ DevSecOps Scans (Docker Scout) ---
+      # --- 4️⃣ DevSecOps Scans ---
       - name: 🧩 Scan Service A with Docker Scout
         uses: docker/scout-action@v1
         with:
@@ -58,7 +58,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           write-comment: true
 
-      # --- 5️⃣ Push Images ---
+      # --- 5️⃣ Push Docker Images ---
       - name: Push Docker Images
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/service-a:latest
@@ -74,37 +74,33 @@ jobs:
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
 
-      # --- 8️⃣ Configure kubeconfig ---
-      - name: Write kubeconfig to file
+      # --- 8️⃣ Configure Kubeconfig ---
+      - name: Write kubeconfig
         run: |
           echo "${{ secrets.KUBECONFIG_CONTENT }}" > $KUBE_CONFIG_PATH
           chmod 600 $KUBE_CONFIG_PATH
           mkdir -p ~/.kube
           cp $KUBE_CONFIG_PATH ~/.kube/config
+        shell: bash
 
-      # --- 9️⃣ Terraform Stage 1: Infra (Cluster) ---
-      - name: Terraform Init (Infra)
+      # --- 9️⃣ Terraform Stage: Deploy Apps ---
+      - name: Terraform Init
         run: terraform init
-        working-directory: terraform/infra
+        working-directory: terraform
 
-      - name: Terraform Apply (Infra)
+      - name: Terraform Apply
         run: terraform apply -auto-approve
-        working-directory: terraform/infra
-        env:
-          TF_VAR_region: ${{ secrets.AWS_REGION }}
-          TF_VAR_cluster_name: my-cluster
-
-      # --- 🔟 Terraform Stage 2: Apps (Deployments) ---
-      - name: Terraform Init (Apps)
-        run: terraform init
-        working-directory: terraform/apps
-
-      - name: Terraform Apply (Apps)
-        run: terraform apply -auto-approve
-        working-directory: terraform/apps
+        working-directory: terraform
         env:
           KUBECONFIG: ${{ env.KUBE_CONFIG_PATH }}
           TF_VAR_dockerhub_user: ${{ secrets.DOCKERHUB_USERNAME }}
           TF_VAR_db_user: ${{ secrets.POSTGRES_USER }}
           TF_VAR_db_pass: ${{ secrets.POSTGRES_PASSWORD }}
-          TF_VAR_db_name: "serviceadb"
+          TF_VAR_db_name: "cna_assignment"
+
+      # --- 🔟 Optional: Save Terraform State ---
+      - name: Save Terraform state artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: terraform/terraform.tfstate

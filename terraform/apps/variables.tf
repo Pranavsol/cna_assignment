@@ -1,21 +1,25 @@
-variable "dockerhub_user" {
-  description = "DockerHub username for pulling images"
+variable "kubeconfig" {
+  description = "Path to kubeconfig file"
+  type        = string
+  default     = "/tmp/kubeconfig"
 }
 
-variable "db_name" {
-  description = "Postgres database name"
-  default     = "serviceadb"
+variable "dockerhub_user" {
+  type        = string
+  description = "DockerHub username"
 }
 
 variable "db_user" {
-  description = "Postgres database user"
+  type        = string
+  description = "Postgres user"
 }
 
 variable "db_pass" {
-  description = "Postgres database password"
+  type        = string
+  description = "Postgres password"
 }
 
-variable "kubeconfig_path" {
-  description = "Path to kubeconfig file"
-  default     = "~/.kube/config"
+variable "db_name" {
+  type        = string
+  description = "Database name"
 }
