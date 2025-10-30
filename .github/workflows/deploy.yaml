@@ -18,6 +18,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug - Show working directory
+        run: |
+          Write-Host "=== Current Directory ==="
+          Get-Location
+          Write-Host "`n=== Files in root ==="
+          Get-ChildItem
+          Write-Host "`n=== Files in terraform ==="
+          Get-ChildItem terraform -ErrorAction SilentlyContinue
+        shell: powershell
+
       # --- 2️⃣ Docker Setup ---
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -92,22 +102,35 @@ jobs:
         shell: powershell
 
       - name: Terraform Plan
-        run: terraform plan -out=tfplan
+        run: |
+          Write-Host "=== Running Terraform Plan ==="
+          terraform plan -out=tfplan
+          Write-Host "=== Plan Complete ==="
         working-directory: terraform
         shell: powershell
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: |
+          Write-Host "=== Running Terraform Apply ==="
+          terraform apply -auto-approve tfplan
+          Write-Host "=== Apply Complete ==="
+          Write-Host "=== Terraform State ==="
+          terraform state list
         working-directory: terraform
         shell: powershell
 
       # --- 9️⃣ Verify Deployment ---
       - name: Verify Deployment
         run: |
-          echo "Checking deployment status..."
-          kubectl get pods
-          kubectl get svc
-          kubectl get ingress
+          Write-Host "=== Checking deployment status ==="
+          kubectl get pods -n default
+          Write-Host "`n=== Services ==="
+          kubectl get svc -n default
+          Write-Host "`n=== Ingress ==="
+          kubectl get ingress -n default
+          Write-Host "`n=== All Namespaces Pods ==="
+          kubectl get pods --all-namespaces
+        shell: powershell
 
       # --- 🔟 Save Terraform State ---
       - name: Save Terraform state artifact

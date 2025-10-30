@@ -19,7 +19,7 @@ def home():
         cursor = conn.cursor()
         
         # Fetch all data from sales table
-        cursor.execute("SELECT * FROM inventory.sales")
+        cursor.execute("SELECT * FROM inveentory.sales")
         rows = cursor.fetchall()
         
         # Get column names
@@ -37,7 +37,7 @@ def home():
             "status": "success",
             "service": "Service B",
             "database": os.getenv("DB_NAME", "cna_assignment"),
-            "table": "inventory.sales",
+            "table": "inveentory.sales",
             "total_records": len(sales_data),
             "data": sales_data
         })
@@ -57,7 +57,7 @@ def count():
     try:
         conn = get_db_conn()
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM inventory.sales")
+        cursor.execute("SELECT COUNT(*) FROM inveentory.sales")
         count = cursor.fetchone()[0]
         cursor.close()
         conn.close()
