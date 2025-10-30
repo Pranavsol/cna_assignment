@@ -1,7 +1,7 @@
 variable "kubeconfig" {
   description = "Path to kubeconfig file"
   type        = string
-  default     = "C:\Users\asus\.kube\config"
+  default     = "C:/Users/asus/.kube/config"
 }
 
 variable "dockerhub_user" {
